@@ -5,9 +5,9 @@
 @font-face {
     font-family: 'Satoshi';
     src: url('/src/assets/Satoshi-Variable.ttf') format('truetype');
-    font-weight: 100 900; /* Zakres wag dla zmiennego fontu */
-    font-style: normal; /* lub italic, jeśli font to obsługuje */
-    font-variation-settings: "wght" 400; /* Domyślne ustawienia dla zmiennych osi */
+    font-weight: 100 900;
+    font-style: normal;
+    font-variation-settings: "wght" 400;
 }
 
 @theme {

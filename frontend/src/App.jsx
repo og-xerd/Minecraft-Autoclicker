@@ -5,11 +5,9 @@ import leftButtonActive from './assets/leftButtonActive.png'
 import rightButton from './assets/rightButton.png'
 import rightButtonActive from './assets/rightButtonActive.png'
 import mousePad from './assets/mousePad.png'
-import sword from './assets/sword.png'
 import './App.css'
-import clsx from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion';
-import { Slider, Button, Switch, Input, Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/react";
+import { Slider, Button, Switch, Input, Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, InputOtp, Chip } from "@heroui/react";
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import LoopRoundedIcon from '@mui/icons-material/LoopRounded';
@@ -71,6 +69,78 @@ function Settings({ windowName, setWindowName, setViewSettings, saveSettings, lo
     )
 }
 
+function Hotbar({ setViewHotbar, hotbar, setHotbar }) {
+    const divRef = useRef(null);
+
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (divRef.current && !divRef.current.contains(event.target)) {
+                setViewHotbar(false);
+            }
+        }
+      
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    const handleKeybind = (i) => (e) => {
+        setHotbar(prevItems => {
+            const newItems = [...prevItems];
+            newItems[i] = {...newItems[i], keybind: e.key};
+            return newItems;
+        })
+    }
+
+    return (
+        <motion.div
+            className="absolute mt-[10px] shadow-[0_0_10px_rgba(0,0,0,0.3)] right-[50px] z-20 bg-[rgb(24,24,24)] border-1 border-[rgb(64,64,64)] flex flex-col gap-[5px] rounded-[10px] overflow-hidden"
+            initial={{ opacity: 0, scale: 1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            ref={divRef}
+        >
+            <div className="flex mt-[5px] justify-center">
+                <label className="text-[20px] font-medium">Inventory</label>
+            </div>
+            <div className="mx-[10px] flex items-center mt-[3px] gap-[5px]">
+                <Chip>s - Sword</Chip>
+                <Chip>b - Block</Chip>
+                <Chip>n - None</Chip>
+            </div>
+            <div className="flex gap-[5px] mx-[10px] mb-[10px]">
+                {Array.from({length: 9}).map((_, i) => (
+                    <div key={i} className="flex flex-col">
+                        <InputOtp 
+                            key={i}
+                            value={hotbar[i].mode}
+                            onValueChange={(value) => (
+                                setHotbar(prevItems => {
+                                    const newItems = [...prevItems];
+                                    newItems[i] = {...newItems[i], mode: value};
+                                    return newItems;
+                                })
+                            )}
+                            allowedKeys="^[a-z]*$"
+                            length={1}
+                        />
+                        <Button
+                            className="focus:outline-none min-w-[40px] p-0 h-[30px] rounded-[5px]"
+                            onContextMenu={(e) => e.preventDefault()}
+                            onKeyDown={handleKeybind(i)}
+                            //isDisabled={leftButtonListening} 
+                            //onClick={() => setLeftButtonListening(true)}
+                        >{hotbar[i].keybind}</Button>
+                    </div>
+                ))}
+            </div>
+        </motion.div>
+    )
+}
+
 function App() {
     const [leftButtonHover, setLeftButtonHover] = useState(false);
     const [rightButtonHover, setRightButtonHover] = useState(false);
@@ -94,12 +164,15 @@ function App() {
     const [rightToggle, setRightToggle] = useState(false);
 
     const [viewSettings, setViewSettings] = useState(false);
+    const [viewHotbar, setViewHotbar] = useState(false);
 
     const [clickingSound, setClickingSound] = useState(false);
 
     const [windowName, setWindowName] = useState("Minecraft 1.8.8");
 
-    const settingsDeps = [leftEnabled, rightEnabled, leftCps, rightCps, leftButtonKeybind, rightButtonKeybind, leftToggle, rightToggle, windowName, clickingSound];
+    const [hotbar, setHotbar] = useState([{ mode: "", keybind: "1" }, { mode: "", keybind: "2" }, { mode: "", keybind: "3" }, { mode: "", keybind: "4" }, { mode: "", keybind: "5" }, { mode: "", keybind: "6" }, { mode: "", keybind: "7" }, { mode: "", keybind: "8" },{ mode: "", keybind: "9" }]);
+
+    const settingsDeps = [leftEnabled, rightEnabled, leftCps, rightCps, leftButtonKeybind, rightButtonKeybind, leftToggle, rightToggle, windowName, clickingSound, hotbar];
 
     const settings = useMemo(() => {
         return new main.Settings({
@@ -113,6 +186,7 @@ function App() {
             RightToggle: rightToggle,
             WindowName: windowName,
             ClickingSound: clickingSound,
+            Hotbar: hotbar,
         });
     }, settingsDeps);
 
@@ -199,20 +273,21 @@ function App() {
             <div className="relative rounded-[10px] overflow-hidden">
                 
                 <div className="absolute top-[10px] right-[10px]">
-                    <Button isIconOnly className="focus:outline-none bg-[rgb(50,50,50)] rounded-[10px] mr-[10px]" onClick={() => setViewSettings(!viewSettings)}>
-                        <InventoryIcon sx={{fontSize: "30px"}}/>
-                    </Button>
-
                     <Button isIconOnly className="focus:outline-none bg-[rgb(50,50,50)] rounded-[10px] mr-[10px]" onClick={() => setClickingSound(!clickingSound)}>
                         {clickingSound ? <VolumeUpIcon sx={{fontSize: "30px"}}/> : <VolumeOffIcon sx={{fontSize: "30px"}}/>}
                     </Button>
 
-                    <Button isIconOnly className="focus:outline-none bg-[rgb(50,50,50)] rounded-[10px]" onClick={() => setViewSettings(!viewSettings)}>
+                    <Button isIconOnly className="focus:outline-none bg-[rgb(50,50,50)] rounded-[10px] mr-[10px]" onClick={() => {setViewHotbar(!viewHotbar); setViewSettings(false)}}>
+                        <InventoryIcon sx={{fontSize: "30px"}}/>
+                    </Button>
+
+                    <Button isIconOnly className="focus:outline-none bg-[rgb(50,50,50)] rounded-[10px]" onClick={() => {setViewSettings(!viewSettings); setViewHotbar(false)}}>
                         <SettingsRoundedIcon sx={{fontSize: "30px"}}/>
                     </Button>
                     
-                    <AnimatePresence>
-                        {viewSettings && <Settings windowName={windowName} setWindowName={setWindowName} setViewSettings={setViewSettings} saveSettings={saveSettings} loadSettings={loadSettings}/>}
+                    <AnimatePresence mode="wait">
+                        {viewSettings && <Settings key={1} windowName={windowName} setWindowName={setWindowName} setViewSettings={setViewSettings} saveSettings={saveSettings} loadSettings={loadSettings}/>}
+                        {viewHotbar && <Hotbar key={2} setViewHotbar={setViewHotbar} hotbar={hotbar} setHotbar={setHotbar} />}
                     </AnimatePresence>
                 </div>
 

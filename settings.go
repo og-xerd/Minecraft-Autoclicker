@@ -18,6 +18,7 @@ type Settings struct {
 	RightToggle   bool
 	ClickingSound bool
 	WindowName    string
+	Hotbar        []any
 }
 
 var VK_KEYS = map[string]int{
@@ -53,6 +54,23 @@ func (a *App) UpdateSettings(settings Settings) {
 	a.AutoClicker.WindowName.Store(settings.WindowName)
 
 	a.AutoClicker.ClickingSound.Store(settings.ClickingSound)
+
+	fmt.Println(settings.Hotbar)
+
+	for index, item := range settings.Hotbar {
+		m := item.(map[string]any)
+
+		mode := m["mode"].(string)
+		keybind := m["keybind"].(string)
+
+		slot := &Slot{}
+		slot.Mode.Store(mode)
+		if keybind != "" {
+			slot.Keybind.Store(int32(GetVK([]rune(keybind)[0])))
+		}
+
+		a.AutoClicker.Hotbar[index].Store(slot)
+	}
 
 	fmt.Println(settings)
 }

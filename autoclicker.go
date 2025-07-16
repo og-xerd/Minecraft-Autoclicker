@@ -23,7 +23,6 @@ var (
 	vkKeyScanW       = user32.NewProc("VkKeyScanW")
 	getAsyncKeyState = user32.NewProc("GetAsyncKeyState")
 	getCursorInfo    = user32.NewProc("GetCursorInfo")
-	getClipCursor    = user32.NewProc("GetClipCursor")
 
 	winmm     = syscall.NewLazyDLL("winmm.dll")
 	playSound = winmm.NewProc("PlaySoundW")
@@ -89,6 +88,12 @@ type MouseButton struct {
 	Toggle  atomic.Bool
 }
 
+type Slot struct {
+	KeyDown atomic.Bool
+	Mode    atomic.Value
+	Keybind atomic.Int32
+}
+
 type AutoClicker struct {
 	Active atomic.Bool
 
@@ -101,6 +106,8 @@ type AutoClicker struct {
 
 	SoundFile     atomic.Value
 	ClickingSound atomic.Bool
+
+	Hotbar []atomic.Value
 }
 
 func NewAutoClicker() *AutoClicker {
@@ -108,9 +115,21 @@ func NewAutoClicker() *AutoClicker {
 	windowName.Store(string(""))
 	hwnd.Store(win.HWND(0))
 
+	hotbar := make([]atomic.Value, 9)
+	for i := range hotbar {
+		slot := &Slot{}
+		slot.Mode.Store("")
+		slot.Keybind.Store(int32(0))
+
+		var v atomic.Value
+		v.Store(slot)
+		hotbar[i] = v
+	}
+
 	return &AutoClicker{
 		WindowName: windowName,
 		Hwnd:       hwnd,
+		Hotbar:     hotbar,
 	}
 }
 
@@ -237,6 +256,8 @@ func (ac *AutoClicker) AutoClicker() {
 }
 
 func (ac *AutoClicker) Run() {
+	var hotbarKeyDown int32
+
 	go func() {
 		for {
 			windowName := ac.WindowName.Load().(string)
@@ -261,7 +282,34 @@ func (ac *AutoClicker) Run() {
 				}
 			}
 
-			time.Sleep(50 * time.Millisecond)
+			if ac.Active.Load() {
+				for _, slot := range ac.Hotbar {
+					slot := slot.Load().(*Slot)
+
+					if IsKeyPressed(int(slot.Keybind.Load())) {
+						hotbarKeyDown = slot.Keybind.Load()
+					}
+
+					if hotbarKeyDown == slot.Keybind.Load() {
+						mode := slot.Mode.Load()
+
+						if mode != nil {
+							switch mode.(string) {
+							case "s":
+								ac.Detention.Store(false)
+							case "b":
+								ac.Detention.Store(false)
+							case "n":
+								ac.Detention.Store(true)
+							case "":
+								ac.Detention.Store(true)
+							}
+						}
+					}
+				}
+			}
+
+			time.Sleep(10 * time.Millisecond)
 		}
 	}()
 

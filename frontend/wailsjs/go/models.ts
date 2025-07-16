@@ -11,6 +11,7 @@ export namespace main {
 	    RightToggle: boolean;
 	    ClickingSound: boolean;
 	    WindowName: string;
+	    Hotbar: any[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -28,6 +29,7 @@ export namespace main {
 	        this.RightToggle = source["RightToggle"];
 	        this.ClickingSound = source["ClickingSound"];
 	        this.WindowName = source["WindowName"];
+	        this.Hotbar = source["Hotbar"];
 	    }
 	}
 
