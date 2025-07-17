@@ -17,8 +17,8 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "M4 Clicker",
-		Width:  620,
+		Title:  "M4 Clicker (Beta 1.0)",
+		Width:  600,
 		Height: 550,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
